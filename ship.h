@@ -6,6 +6,8 @@
 #ifndef SHIP_H
 #define SHIP_H
 #include <vector>
+#include <string>
+#include <sstream>
 using namespace std;
 
 class ship{
@@ -137,7 +139,28 @@ void place_ship(vector<vector<int> > &board){
     }
 }
 
+string to_string(){
+    stringstream ss;
+    ss << row << "," << column << "," << row_rotation << "," << column_rotation;
+    return ss.str();
+}
+
+void from_string(const string &str){
+    int vals[4];
+    string tmp;
+    istringstream stream(str);
+    for(int i = 0; i < 4; i++){
+        getline(stream, tmp, ',');
+        vals[i] = atoi(tmp.c_str());
+    }
+    row = vals[0];
+    column = vals[1];
+    row_rotation = vals[2];
+    column_rotation = vals[3];
+}
+
 private:
+//rotation vars act as scalars for row/column direction
 int row, column, row_rotation, column_rotation, ship_size;
 
 void clear_board(vector<vector<int> > &board){

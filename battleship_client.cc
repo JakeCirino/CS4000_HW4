@@ -127,7 +127,10 @@ void render(){
     // Redraw the screen.
     refresh();
 
-    printw("Your board:");
+    printw("Your Board:");
+    move(10, 0);
+    printw("Enemy Board:");
+    draw_matrix(enemy_board, 0, 0, 11, 0);
     draw_matrix(board, 0, 0, 1, 0);
 
     while ((ch = getch()) != 'q')
@@ -145,9 +148,10 @@ void render(){
                     break;
                 case 1:
                     //ship placed, send coordinates to server
-                    //TODO
+                    
                     break;
             }
+            draw_matrix(enemy_board, 0, 0, 11, 0);
             draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
@@ -165,6 +169,7 @@ void render(){
                 shp.place_ship(board);
                 break;
             }
+            draw_matrix(enemy_board, 0, 0, 11, 0);
             draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
@@ -181,6 +186,7 @@ void render(){
                 shp.place_ship(board);
                 break;
             }
+            draw_matrix(enemy_board, 0, 0, 11, 0);
             draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
@@ -193,6 +199,7 @@ void render(){
                 cur_row = (4 + cur_row) % 4;
                 break;
             }
+            draw_matrix(enemy_board, 0, 0, 11, 0);
             draw_matrix(board, cur_row, cur_col, 1, 0);
 
             //      paint_markers(rows,cols,10,cur_row,cur_col);
@@ -207,6 +214,7 @@ void render(){
                 cur_row %= 4;
                 break;
             }
+            draw_matrix(enemy_board, 0, 0, 11, 0);
             draw_matrix(board, cur_row, cur_col, 1, 0);
             //paint_markers(rows,cols,10,cur_row,cur_col);
             // Redraw the screen.
