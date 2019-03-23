@@ -3,6 +3,9 @@
 // Author: Jake Cirino
 // Purpose: Client renderer for battleship
 //******************************************
+#ifndef RENDERER_H
+#define RENDERER_H
+
 #include <ncurses.h>
 #include <vector>
 #include <iostream>
@@ -12,43 +15,54 @@ using namespace std;
 
 class battleship_renderer{
 
-void draw_top_matrix(vector<vector<int> > &board,
-		     int cur_row,
-		     int cur_col) {
+private: 
 
+void draw_matrix(vector<vector<int> > &board,
+		     int cur_row,
+		     int cur_col,
+             int row_offset,
+             int col_offset) {
   for (int j=0;j<4;j++) {
-      move(0,2*j);
+      move(row_offset,2*j+col_offset);
       printw("+-");
     }
-    move(0,2*4);
+    move(row_offset,2*4+col_offset);
     printw("+");
   for (int i=0;i<4;i++) {
     for (int j=0;j<4;j++) {
-      move(2*i+1,2*j);
+      move(2*i+1+row_offset,2*j+col_offset);
       printw("|");
-      move(2*i+1,2*j+1);
+      move(2*i+1+row_offset,2*j+1+col_offset);
       if (board[i][j] == 0) {
 	printw(" ");
       } else {
 	printw("X");
       }
     }
-    move(2*i+1,2*4);
+    move(2*i+1+row_offset,2*4+col_offset);
     printw("|");
     for (int j=0;j<4;j++) {
-      move(2*i+2,2*j);
+      move(2*i+2+row_offset,2*j+col_offset);
       printw("+-");
     }
-    move(2*i+2,2*4);
+    move(2*i+2+row_offset,2*4+col_offset);
     printw("+");
   }
-  move(2*cur_row+1,2*cur_col+1);
+  move(2*cur_row+1+row_offset,2*cur_col+1+col_offset);
 }
+
+public:
 
 /**
  * Renders the screen
  */
-void render_screen(vector<vector<int>> &board){
+void render(vector<vector<int> > &board, int game_state){
+    int rows;
+    int cols;
+    int cur_row=0;
+    int cur_col=0;
+    int ch;
+
     //init screen
     initscr();
 
@@ -68,8 +82,52 @@ void render_screen(vector<vector<int>> &board){
     // Redraw the screen.
     refresh();
 
+    printw("Your board:");
+    draw_matrix(board, 0, 0, 1, 0);
 
-    draw_top_matrix(board,0,0);
+    while ((ch = getch())!='q') {
+      switch (ch) {
+        case ' ':  board[cur_row][cur_col]=0;
+          draw_matrix(board,cur_row,cur_col,1,0);
+          // Redraw the screen.
+          refresh();
+
+          break;
+        case KEY_RIGHT:
+          cur_col++;
+          cur_col%=4;
+          draw_matrix(board,cur_row,cur_col,1,0);
+          // Redraw the screen.
+          refresh();
+          break;
+        case KEY_LEFT:
+          cur_col--;
+          cur_col = (4+cur_col)%4;
+          draw_matrix(board,cur_row,cur_col,1,0);
+          // Redraw the screen.
+          refresh();
+          break;
+        case KEY_UP:
+          cur_row--;
+          cur_row=(4+cur_row) % 4;
+          draw_matrix(board,cur_row,cur_col,1,0);
+          
+          //      paint_markers(rows,cols,10,cur_row,cur_col);
+          // Redraw the screen.
+          refresh();
+          break;
+        case KEY_DOWN:
+          cur_row++;
+          cur_row%=4;
+          draw_matrix(board,cur_row,cur_col,1,0);
+                //paint_markers(rows,cols,10,cur_row,cur_col);
+          // Redraw the screen.
+          refresh();
+          break;
+      }
+    }
+  endwin();
 }
 
-}
+};
+#endif
