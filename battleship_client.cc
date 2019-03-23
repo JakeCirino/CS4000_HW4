@@ -16,6 +16,7 @@ using boost::asio::ip::tcp;
 //sockets
 int port;
 boost::asio::ip::address server_ip;
+tcp::socket *socket1;
 
 //game
 vector<vector<int> > board, enemy_board;
@@ -25,33 +26,35 @@ int game_state; //state 0 = placing ship, 1 rotating ship, 2 = taking turn
 /**
  * Connects to the server and returns the connected socket
  */
-tcp::socket& connect_to_server(){
+void connect_to_server(){
     //create client service
     boost::asio::io_service client_service;
 
     //resolve and connect to server
     tcp::resolver resolver(client_service);
-    tcp::socket socket(client_service);
-    socket.connect(tcp::endpoint(server_ip, port));
-
-    return socket;
+    socket1 = new tcp::socket(client_service);
+    socket1->connect(tcp::endpoint(server_ip, port));
 }
 
 /**
  * Formats and sends a packet to the server
  */
-void send_packet(tcp::socket &socket, string msg){
+void send_packet(string msg){
     msg += "\n";
-    boost::asio::write(socket, boost::asio::buffer(msg));
+    boost::asio::write(*socket1, boost::asio::buffer(msg));
 }
 
 /**
  * Reads the next packet from the server
  */
-string read_packet(tcp::socket &socket){
+string read_packet(){
     boost::asio::streambuf buf;
-    boost::asio::read_until(socket, buf, "\n");
-    return boost::asio::buffer_cast<const char*>(buf.data());
+    boost::asio::read_until(*socket1, buf, "\n");
+    istream is(&buf);
+    string packet;
+    getline(is, packet);
+    
+    return packet;
 }
 
 void draw_matrix(vector<vector<int> > &board,
@@ -145,14 +148,17 @@ void render(){
                     shp.fit_ship_clockwise(board);
                     shp.place_ship(board);
                     game_state = 1;
+                    draw_matrix(enemy_board, 0, 0, 11, 0);
+                    draw_matrix(board, cur_row, cur_col, 1, 0);
                     break;
                 case 1:
                     //ship placed, send coordinates to server
-                    
+                    send_packet(shp.to_string());
+                    game_state = 2;
+                    draw_matrix(board, cur_row, cur_col, 1, 0);
+                    draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
                     break;
             }
-            draw_matrix(enemy_board, 0, 0, 11, 0);
-            draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
 
@@ -163,14 +169,16 @@ void render(){
             case 0:
                 cur_col++;
                 cur_col %= 4;
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             case 1:
                 shp.fit_ship_clockwise(board);
                 shp.place_ship(board);
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             }
-            draw_matrix(enemy_board, 0, 0, 11, 0);
-            draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
             break;
@@ -180,14 +188,16 @@ void render(){
             case 0:
                 cur_col--;
                 cur_col = (4 + cur_col) % 4;
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             case 1:
                 shp.fit_ship_counterclockwise(board);
                 shp.place_ship(board);
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             }
-            draw_matrix(enemy_board, 0, 0, 11, 0);
-            draw_matrix(board, cur_row, cur_col, 1, 0);
             // Redraw the screen.
             refresh();
             break;
@@ -197,10 +207,10 @@ void render(){
             case 0:
                 cur_row--;
                 cur_row = (4 + cur_row) % 4;
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             }
-            draw_matrix(enemy_board, 0, 0, 11, 0);
-            draw_matrix(board, cur_row, cur_col, 1, 0);
 
             //      paint_markers(rows,cols,10,cur_row,cur_col);
             // Redraw the screen.
@@ -212,10 +222,10 @@ void render(){
             case 0:
                 cur_row++;
                 cur_row %= 4;
+                draw_matrix(enemy_board, 0, 0, 11, 0);
+                draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
             }
-            draw_matrix(enemy_board, 0, 0, 11, 0);
-            draw_matrix(board, cur_row, cur_col, 1, 0);
             //paint_markers(rows,cols,10,cur_row,cur_col);
             // Redraw the screen.
             refresh();
@@ -238,8 +248,8 @@ int main(int argc, char *argv[]){
     }
 
 
-    //connect to server and get socket
-    //tcp::socket socket = connect_to_server();
+    //connect to server
+    connect_to_server();
 
     //initialize game boards
     for(int i=0; i < 4; i++){
