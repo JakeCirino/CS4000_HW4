@@ -18,8 +18,7 @@ class battleship_renderer{
 
 private: 
 
-//state 0 = placing ship, 1 rotating ship, 2 = taking turn
-int game_state;
+
 ship shp;
 
 void draw_matrix(vector<vector<int> > &board,

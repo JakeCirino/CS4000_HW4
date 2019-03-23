@@ -49,7 +49,7 @@ void set_rotation(int r, int c){
     column_rotation = c;
 }
 
-void rotate_counterclockwise(){
+void rotate_clockwise(){
     if(row_rotation == 0 && column_rotation == 1){
         //was facing east
         row_rotation = -1;
@@ -77,7 +77,7 @@ void rotate_counterclockwise(){
     }
 }
 
-void rotate_clockwise(){
+void rotate_counterclockwise(){
     if(row_rotation == 0 && column_rotation == 1){
         //was facing east
         row_rotation = 1;
