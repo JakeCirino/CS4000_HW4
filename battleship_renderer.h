@@ -10,12 +10,17 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include "ship.h"
 
 using namespace std;
 
 class battleship_renderer{
 
 private: 
+
+//state 0 = placing ship, 1 rotating ship, 2 = taking turn
+int game_state;
+ship shp;
 
 void draw_matrix(vector<vector<int> > &board,
 		     int cur_row,
@@ -53,10 +58,22 @@ void draw_matrix(vector<vector<int> > &board,
 
 public:
 
+battleship_renderer(int game_state = 0){
+  this->game_state = 0;
+}
+
+int get_game_state(){
+  return game_state;
+}
+
+void set_game_state(int gs){
+  game_state = gs;
+}
+
 /**
  * Renders the screen
  */
-void render(vector<vector<int> > &board, int game_state){
+void render(vector<vector<int> > &board){
     int rows;
     int cols;
     int cur_row=0;
@@ -87,29 +104,57 @@ void render(vector<vector<int> > &board, int game_state){
 
     while ((ch = getch())!='q') {
       switch (ch) {
-        case ' ':  board[cur_row][cur_col]=0;
+        case ' ':  
+          //check game state
+          if(game_state == 0){
+            //place ship
+            shp.set_position(cur_row, cur_col);
+            shp.fit_ship_clockwise(board);
+            shp.place_ship(board);
+            game_state = 1;
+          }
           draw_matrix(board,cur_row,cur_col,1,0);
           // Redraw the screen.
           refresh();
 
           break;
         case KEY_RIGHT:
-          cur_col++;
-          cur_col%=4;
+          switch(game_state){
+            case 0:
+              cur_col++;
+              cur_col%=4;
+              break;
+            case 1:
+              shp.fit_ship_clockwise(board);
+              shp.place_ship(board);
+              break;
+          }
           draw_matrix(board,cur_row,cur_col,1,0);
           // Redraw the screen.
           refresh();
           break;
         case KEY_LEFT:
-          cur_col--;
-          cur_col = (4+cur_col)%4;
+          switch(game_state){
+            case 0:
+                cur_col--;
+                cur_col = (4+cur_col)%4;
+              break;
+            case 1:
+              shp.fit_ship_counterclockwise(board);
+              shp.place_ship(board);
+              break;
+          }
           draw_matrix(board,cur_row,cur_col,1,0);
           // Redraw the screen.
           refresh();
           break;
         case KEY_UP:
-          cur_row--;
-          cur_row=(4+cur_row) % 4;
+          switch(game_state){
+            case 0:
+              cur_row--;
+              cur_row=(4+cur_row) % 4;
+              break;
+          }
           draw_matrix(board,cur_row,cur_col,1,0);
           
           //      paint_markers(rows,cols,10,cur_row,cur_col);
@@ -117,8 +162,12 @@ void render(vector<vector<int> > &board, int game_state){
           refresh();
           break;
         case KEY_DOWN:
-          cur_row++;
-          cur_row%=4;
+          switch(game_state){
+            case 0:
+              cur_row++;
+              cur_row%=4;
+              break;
+          }
           draw_matrix(board,cur_row,cur_col,1,0);
                 //paint_markers(rows,cols,10,cur_row,cur_col);
           // Redraw the screen.

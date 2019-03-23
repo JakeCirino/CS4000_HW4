@@ -11,7 +11,7 @@ using namespace std;
 class ship{
 
 public:
-ship(int r, int c, int rot_row, int rot_col, int size = 3){
+ship(int r = 0, int c = 0, int rot_row = 0, int rot_col = 1, int size = 3){
     row = r;
     column = c;
     row_rotation = rot_row;
@@ -49,7 +49,7 @@ void set_rotation(int r, int c){
     column_rotation = c;
 }
 
-void rotate_clockwise(){
+void rotate_counterclockwise(){
     if(row_rotation == 0 && column_rotation == 1){
         //was facing east
         row_rotation = -1;
@@ -77,7 +77,7 @@ void rotate_clockwise(){
     }
 }
 
-void rotate_counterclockwise(){
+void rotate_clockwise(){
     if(row_rotation == 0 && column_rotation == 1){
         //was facing east
         row_rotation = 1;
@@ -112,10 +112,26 @@ bool ship_inbounds(vector<vector<int> > &board){
 }
 
 /**
- * Places a ship on the board matrix
+ * Properly rotates ship to fit on the board in its current location
+ */
+void fit_ship_clockwise(vector<vector<int> > &board){
+    do{
+        rotate_clockwise();
+    }while(!ship_inbounds(board));
+}
+
+void fit_ship_counterclockwise(vector<vector<int> > &board){
+    do{
+        rotate_counterclockwise();
+    }while(!ship_inbounds(board));
+}
+
+/**
+ * Updates ship location on a board
  */
 void place_ship(vector<vector<int> > &board){
     clear_board(board);
+
     for(int i = 0; i < ship_size; i++){
         board[row + (i*row_rotation)][column + (i*column_rotation)] = 1;
     }

@@ -21,9 +21,6 @@ boost::asio::ip::address server_ip;
 //game
 vector<vector<int> > board, enemy_board;
 
-//state 0 = placing ship, 1 rotating ship, 2 = taking turn
-int game_state=0;
-
 /**
  * Connects to the server and returns the connected socket
  */
