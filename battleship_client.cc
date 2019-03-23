@@ -8,6 +8,8 @@
 #include <vector>
 #include <ncurses.h>
 #include <boost/asio.hpp>
+#include <utility>
+#include <sstream>
 #include "ship.h"
 
 using namespace std;
@@ -21,7 +23,7 @@ tcp::socket *socket1;
 //game
 vector<vector<int> > board, enemy_board;
 ship shp;
-int game_state; //state 0 = placing ship, 1 rotating ship, 2 = taking turn
+int game_state; //state 0 = placing ship, 1 rotating ship, 2 = taking turn, 3 = paused, 4 = game over
 
 /**
  * Connects to the server and returns the connected socket
@@ -55,6 +57,17 @@ string read_packet(){
     getline(is, packet);
     
     return packet;
+}
+
+pair<int, int> read_coordinate(string &str){
+    int vals[2];
+    string tmp;
+    istringstream stream(str);
+    for(int i = 0; i < 2; i++){
+        getline(stream, tmp, ',');
+        vals[i] = atoi(tmp.c_str());
+    }
+    return pair<int, int>(vals[0], vals[1]);
 }
 
 void draw_matrix(vector<vector<int> > &board,
@@ -158,6 +171,45 @@ void render(){
                     draw_matrix(board, cur_row, cur_col, 1, 0);
                     draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
                     break;
+                case 2:
+                    //send shot coordinates
+                    //pause game state
+                    game_state = 3;
+                    stringstream ss;
+                    ss << cur_row << "," << cur_col;
+                    send_packet(ss.str());
+
+                    //read round result
+                    string s = read_packet();
+                    string vals[3];
+                    string tmp;
+                    istringstream stream(s);
+                    for(int i = 0; i < 3; i++){
+                        getline(stream, tmp, ',');
+                        vals[i] = tmp;
+                    }
+
+                    //read shot result
+                    string sr = vals[2];
+                    if(sr == "M"){
+                        enemy_board[cur_row][cur_col] = 2;
+                    }else{
+                        enemy_board[cur_row][cur_col] = 3;
+                    }
+
+                    //process result from other players shot
+                    string osr = vals[0] + "," + vals[1];
+                    pair<int, int> other_coords = read_coordinate(osr);
+                    if(board[other_coords.first][other_coords.second] == 0){
+                        board[other_coords.first][other_coords.second] = 2;
+                    }else{
+                        board[other_coords.first][other_coords.second] = 3;
+                    }                    
+                    game_state = 2;
+                    draw_matrix(board, 0, 0, 1, 0);
+                    draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
+                    refresh();
+                    break;
             }
             // Redraw the screen.
             refresh();
@@ -178,6 +230,11 @@ void render(){
                 draw_matrix(enemy_board, 0, 0, 11, 0);
                 draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
+            case 2:
+                cur_col++;
+                cur_col %= 4;
+                draw_matrix(board, cur_row, cur_col, 1, 0);
+                draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
             }
             // Redraw the screen.
             refresh();
@@ -197,6 +254,12 @@ void render(){
                 draw_matrix(enemy_board, 0, 0, 11, 0);
                 draw_matrix(board, cur_row, cur_col, 1, 0);
                 break;
+            case 2:
+                cur_col--;
+                cur_col = (4 + cur_col) % 4;
+                draw_matrix(board, cur_row, cur_col, 1, 0);
+                draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
+                break;
             }
             // Redraw the screen.
             refresh();
@@ -209,6 +272,12 @@ void render(){
                 cur_row = (4 + cur_row) % 4;
                 draw_matrix(enemy_board, 0, 0, 11, 0);
                 draw_matrix(board, cur_row, cur_col, 1, 0);
+                break;
+            case 2:
+                cur_row--;
+                cur_row = (4 + cur_row) % 4;
+                draw_matrix(board, cur_row, cur_col, 1, 0);
+                draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
                 break;
             }
 
@@ -224,6 +293,12 @@ void render(){
                 cur_row %= 4;
                 draw_matrix(enemy_board, 0, 0, 11, 0);
                 draw_matrix(board, cur_row, cur_col, 1, 0);
+                break;
+            case 2:
+                cur_row++;
+                cur_row %= 4;
+                draw_matrix(board, cur_row, cur_col, 1, 0);
+                draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
                 break;
             }
             //paint_markers(rows,cols,10,cur_row,cur_col);
@@ -263,4 +338,6 @@ int main(int argc, char *argv[]){
 
     //create renderer and begin rendering screen/gameplay
     render();
+    socket1->close();
+    return 1;
 }
