@@ -125,9 +125,23 @@ int main(){
         }
         cout << "client2 shot complete" << endl;
 
-        //send packet updates to both players about other players shot
-        string status1 = packet2 + "," + hit1;
-        string status2 = packet1 + "," + hit2;
+        //send packet updates to both players about the round
+        string p1_status, p2_status; //0 = another round, 1 = win, 2 = loss, 3 = tie
+        if(p1_hits == 3 && p2_hits == 3){
+            p1_status = "3";
+            p2_status = "3";
+        }else if(p1_hits == 3 && p2_hits < 3){
+            p1_status = "1";
+            p2_status = "2";
+        }else if(p1_hits < 3 && p2_hits == 3){
+            p1_status = "2";
+            p2_status = "1";
+        }else{
+            p1_status = "0";
+            p2_status = "0";
+        }
+        string status1 = packet2 + "," + hit1 + "," + p1_status;
+        string status2 = packet1 + "," + hit2 + "," + p2_status;
         send_packet(socket1, status1);
         send_packet(socket2, status2);
         cout << "round complete" << endl;

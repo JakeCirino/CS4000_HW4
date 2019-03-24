@@ -24,6 +24,7 @@ tcp::socket *socket1;
 vector<vector<int> > board, enemy_board;
 ship shp;
 int game_state; //state 0 = placing ship, 1 rotating ship, 2 = taking turn, 3 = paused, 4 = game over
+int game_status; //0 = win, 1 = lose, 2 = tie
 
 /**
  * Connects to the server and returns the connected socket
@@ -149,8 +150,9 @@ void render(){
     draw_matrix(enemy_board, 0, 0, 11, 0);
     draw_matrix(board, 0, 0, 1, 0);
 
-    while ((ch = getch()) != 'q')
+    while (game_state != 4)
     {
+        ch = getch();
         switch (ch)
         {
         case ' ':
@@ -181,10 +183,10 @@ void render(){
 
                     //read round result
                     string s = read_packet();
-                    string vals[3];
+                    string vals[4];
                     string tmp;
                     istringstream stream(s);
-                    for(int i = 0; i < 3; i++){
+                    for(int i = 0; i < 4; i++){
                         getline(stream, tmp, ',');
                         vals[i] = tmp;
                     }
@@ -205,10 +207,21 @@ void render(){
                     }else{
                         board[other_coords.first][other_coords.second] = 3;
                     }                    
-                    game_state = 2;
-                    draw_matrix(board, 0, 0, 1, 0);
-                    draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
-                    refresh();
+
+                    if(vals[3] != "0"){
+                        game_state = 4;
+                        if(vals[3] == "1"){
+                            game_status = 0;
+                        }else if(vals[3] == "2"){
+                            game_status = 1;
+                        }else{
+                            game_status = 2;
+                        }
+                    }else{
+                        draw_matrix(board, 0, 0, 1, 0);
+                        draw_matrix(enemy_board, cur_row, cur_col, 11, 0);
+                        game_state = 2;
+                    }
                     break;
             }
             // Redraw the screen.
@@ -338,6 +351,16 @@ int main(int argc, char *argv[]){
 
     //create renderer and begin rendering screen/gameplay
     render();
-    socket1->close();
+    switch(game_status){
+        case 0:
+        cout << "You win!" << endl;
+        break;
+        case 1:
+        cout << "You lose!" << endl;
+        break;
+        case 2:
+        cout << "Tie!" << endl;
+        break;
+    }
     return 1;
 }
